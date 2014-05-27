@@ -47,7 +47,7 @@ public class MapReduceDriver {
     private final Integer MIN_C_SIZE; // How many instances we'll need in our cluster before executing a MapR job
 
     public MapReduceDriver(){
-        this(3,1,100); // default case: Run MapR job on this local instance, 100 HRUs
+        this(3,100,1); // default case: Run MapR job on this local instance, 100 HRUs
     }
     
     public MapReduceDriver(int keys, int numHRU, int minClusterSize){
@@ -57,10 +57,9 @@ public class MapReduceDriver {
     }
 
     // Runs a mapreduce job
-    public Long execute(/*String groupID*/) throws Exception {
-        
+    public Long execute() throws Exception {
+        Long duration = -1L;
         Config config = new Config();
-        //config.getGroupConfig().setName(groupID);
         
         // set a minimum number of nodes in the cluster before the mapreduce job can begin
         config.setProperty("hazelcast.initial.min.cluster.size", MIN_C_SIZE.toString());
@@ -68,18 +67,24 @@ public class MapReduceDriver {
         HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
 
         try {
+            long startTime = System.currentTimeMillis();
+            
             fillMapWithData(hazelcastInstance);
 
             Map<String, Double[]> slopeAvgs = mapReduce(hazelcastInstance);
 
-            for (Map.Entry<String, Double[]> entry : slopeAvgs.entrySet()) {
+            long stopTime = System.currentTimeMillis();
+            duration = stopTime - startTime;
+            
+            // we don't need to print values for now
+            /*for (Map.Entry<String, Double[]> entry : slopeAvgs.entrySet()) {
                 System.out.println("\tSlope type'" + entry.getKey() + "' has average " + entry.getValue()[0] + " angle, and max of "+entry.getValue()[1]);
-            }
+            }*/
         } finally {
             Hazelcast.shutdownAll();
         }
         
-        return 0L;
+        return duration;
     }
 
     private  Map<String, Double[]> mapReduce(HazelcastInstance hazelcastInstance) throws Exception {
@@ -94,32 +99,14 @@ public class MapReduceDriver {
         Job<Integer, HRU> job = jobTracker.newJob(source);
 
         // Creating a new Job
-        ICompletableFuture<Map<String, Double[]>> future = job // returned future
-                .mapper(new HRUMapper())             // adding a mapper
-                .reducer(new HRUReducerFactory())    // adding a reducer through the factory
-                .submit();                                 // submit the task
+        ICompletableFuture<Map<String, Double[]>> future = job
+                .mapper(new HRUMapper())
+                .reducer(new HRUReducerFactory())
+                .submit();
 
-        // Attach a callback listener
-        //future.andThen(buildCallback());
-
-        // Wait and retrieve the result
         return future.get();
     }
-/*
-    private  ExecutionCallback<Map<String, Double[]>> buildCallback() {
-        return new ExecutionCallback<Map<String, Double[]>>() {
-            @Override
-            public void onResponse(Map<String, Double[]> stringLongMap) {
-                System.out.println("Calculation finished! :)");
-            }
 
-            @Override
-            public void onFailure(Throwable throwable) {
-                throwable.printStackTrace();
-            }
-        };
-    }
-*/
     private  void fillMapWithData(HazelcastInstance hazelcastInstance) throws Exception {
         IMap<Integer, HRU> map = hazelcastInstance.getMap("articles");
         for(int i=1;i<=NUM_HRU;i++){

@@ -9,6 +9,7 @@ import com.hazelcast.core.IExecutorService;
 import com.hazelcast.core.MultiMap;
 import hazel.executor.HRUavgMax;
 import hazel.hru.HRU;
+import java.util.concurrent.Future;
 /**
  *
  * @author daniel.elliott
@@ -38,22 +39,31 @@ public class ExecutorDriver {
         MIN_CLUSTER_SIZE = clusterSize;
     }
     
-    //TODO add timing
     public Long execute() throws Exception {
-
+        long duration = -1L; // How long we spent executing task
         Config cfg = new Config();
+        cfg.setProperty("hazelcast.initial.min.cluster.size", (new Integer(MIN_CLUSTER_SIZE)).toString());
         HazelcastInstance hz = Hazelcast.newHazelcastInstance(cfg);
         IExecutorService es = hz.getExecutorService("default");
         try {
+            long startTime = System.currentTimeMillis();
+            
             fillMapWithData(hz);
-
-            es.submitToKeyOwner(new HRUavgMax("LOW"), "LOW", buildCallback());
-            es.submitToKeyOwner(new HRUavgMax("MED"), "MED", buildCallback());
-            es.submitToKeyOwner(new HRUavgMax("HIGH"), "HIGH", buildCallback());
+            Future<String[]> low = es.submitToKeyOwner(new HRUavgMax("LOW"), "LOW");
+            Future<String[]> med = es.submitToKeyOwner(new HRUavgMax("MED"), "MED");
+            Future<String[]> high = es.submitToKeyOwner(new HRUavgMax("HIGH"), "HIGH");
+            
+            //block to avoid returning too early
+            low.get();
+            med.get();
+            high.get();
+            
+           long stopTime = System.currentTimeMillis();
+           duration = stopTime - startTime;
         } finally {
             Hazelcast.shutdownAll();
         }
-        return 0L;
+        return duration;
     }
         
         private void fillMapWithData(HazelcastInstance hazelcastInstance) throws Exception {
