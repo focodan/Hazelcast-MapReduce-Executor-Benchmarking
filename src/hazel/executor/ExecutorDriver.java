@@ -7,7 +7,6 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.core.MultiMap;
-import hazel.executor.HRUavgMax;
 import hazel.hru.HRU;
 import java.util.concurrent.Future;
 /**
@@ -39,33 +38,46 @@ public class ExecutorDriver {
         MIN_CLUSTER_SIZE = clusterSize;
     }
     
-    public Long execute() throws Exception {
-        long duration = -1L; // How long we spent executing task
+    // Runs a distributed executor servre job
+    // Returns time in milliseconds for {total duration of creating data and running task, duration of running task}
+    public Long[] execute() throws Exception {
+        long durationTask = -1L; // How long it takes to execute job without the overhead of placing data in the cluster
+        long durationTotal = -1L; // How long it takes to execute job including initializing data to place in the cluster
+        Long[] durations = new Long[2];
+
         Config cfg = new Config();
         cfg.setProperty("hazelcast.initial.min.cluster.size", (new Integer(MIN_CLUSTER_SIZE)).toString());
         HazelcastInstance hz = Hazelcast.newHazelcastInstance(cfg);
         IExecutorService es = hz.getExecutorService("default");
         try {
-            long startTime = System.currentTimeMillis();
-            
+            long startTimeInitData = System.currentTimeMillis();
+
             fillMapWithData(hz);
+
+            long startTimeExecute = System.currentTimeMillis();
+
             Future<String[]> low = es.submitToKeyOwner(new HRUavgMax("LOW"), "LOW");
             Future<String[]> med = es.submitToKeyOwner(new HRUavgMax("MED"), "MED");
             Future<String[]> high = es.submitToKeyOwner(new HRUavgMax("HIGH"), "HIGH");
-            
+
             //block to avoid returning too early
             low.get();
             med.get();
             high.get();
-            
-           long stopTime = System.currentTimeMillis();
-           duration = stopTime - startTime;
+
+            long stopTime = System.currentTimeMillis();
+            durationTotal = stopTime - startTimeInitData;
+            durationTask = stopTime - startTimeExecute;
         } finally {
             Hazelcast.shutdownAll();
         }
-        return duration;
+
+        durations[0] = durationTotal;
+        durations[1] = durationTask;
+
+        return durations;
     }
-        
+
         private void fillMapWithData(HazelcastInstance hazelcastInstance) throws Exception {
         MultiMap<String, HRU> map = hazelcastInstance.getMultiMap("HRUs");
         for (int i = 1; i <= NUM_HRU; i++) {

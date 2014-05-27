@@ -20,8 +20,6 @@ import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
 import hazel.hru.HRU;
 
-import java.util.StringTokenizer;
-
 public class HRUMapper
         implements Mapper<Integer, HRU, String, Double> {
 

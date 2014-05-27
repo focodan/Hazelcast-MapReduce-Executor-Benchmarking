@@ -17,7 +17,6 @@
 package hazel.mapreduce;
 
 import com.hazelcast.config.Config;
-import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
@@ -57,8 +56,11 @@ public class MapReduceDriver {
     }
 
     // Runs a mapreduce job
-    public Long execute() throws Exception {
-        Long duration = -1L;
+    // Returns time in milliseconds for {total duration of creating data and running job, duration of running job}
+    public Long[] execute() throws Exception {
+        long durationTask = -1L; // How long it takes to execute job without the overhead of placing data in the cluster
+        long durationTotal = -1L; // How long it takes to execute job including initializing data to place in the cluster
+        Long[] durations = new Long[2];
         Config config = new Config();
         
         // set a minimum number of nodes in the cluster before the mapreduce job can begin
@@ -67,15 +69,18 @@ public class MapReduceDriver {
         HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
 
         try {
-            long startTime = System.currentTimeMillis();
+            long startTimeInitData = System.currentTimeMillis();
             
             fillMapWithData(hazelcastInstance);
-
+            
+            long startTimeExecute = System.currentTimeMillis();
+            
             Map<String, Double[]> slopeAvgs = mapReduce(hazelcastInstance);
 
             long stopTime = System.currentTimeMillis();
-            duration = stopTime - startTime;
-            
+            durationTotal = stopTime - startTimeInitData;
+            durationTask = stopTime - startTimeExecute;
+
             // we don't need to print values for now
             /*for (Map.Entry<String, Double[]> entry : slopeAvgs.entrySet()) {
                 System.out.println("\tSlope type'" + entry.getKey() + "' has average " + entry.getValue()[0] + " angle, and max of "+entry.getValue()[1]);
@@ -84,7 +89,10 @@ public class MapReduceDriver {
             Hazelcast.shutdownAll();
         }
         
-        return duration;
+        durations[0] = durationTotal;
+        durations[1] = durationTask;
+        
+        return durations;
     }
 
     private  Map<String, Double[]> mapReduce(HazelcastInstance hazelcastInstance) throws Exception {

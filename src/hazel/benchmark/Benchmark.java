@@ -38,8 +38,8 @@ public class Benchmark {
     // returns array of {mapReduceTime, executorTime} in milliseconds
     public synchronized Long[] execute() {
         // running times in milliseconds
-        Long runTimeMapR;
-        Long runTimeExecutor;
+        Long[] runTimeMapR;
+        Long[] runTimeExecutor;
         try {
             //TODO add cases for other task types
             if (taskType.equals("HRU")) {
@@ -49,7 +49,7 @@ public class Benchmark {
                 MapReduceDriver mr = new MapReduceDriver(numKeys, numEntries, minClusterSize);
                 runTimeMapR = mr.execute();
                 
-                return new Long[]{runTimeMapR, runTimeExecutor};
+                return new Long[]{runTimeMapR[0],runTimeMapR[1], runTimeExecutor[0],runTimeExecutor[1]};
             }
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -75,10 +75,10 @@ public class Benchmark {
 
         Long[] times = bench.execute();
 
-        if (times != null && times.length == 2) {
+        if (times != null && times.length == 4) {
             System.out.println("Times to execute in milliseconds:\n"+
-                    "Mapreduce: "+times[0]+"\n"+
-                    "Executor: "+times[1]);
+                    "Mapreduce: (data initialization time + job time) "+times[0]+", (job time) "+times[1]+"\n"+
+                    "Executor: (data initialization time + job time) "+times[2]+", (job time) "+times[3]);
         }
         else{
             System.out.println("Error running benchmark.");

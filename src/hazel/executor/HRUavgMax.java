@@ -1,15 +1,12 @@
 package hazel.executor;
 
-import com.hazelcast.config.Config;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.MultiMap;
 import hazel.hru.HRU;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
