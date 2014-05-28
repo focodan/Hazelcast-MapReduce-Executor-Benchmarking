@@ -108,7 +108,7 @@ public class MapReduceDriver {
 
         // Creating a new Job
         ICompletableFuture<Map<String, Double[]>> future = job
-                .mapper(new HRUMapper())
+                .mapper(new HRUMapper(SLOPE_GRANULARITY))
                 .reducer(new HRUReducerFactory())
                 .submit();
 

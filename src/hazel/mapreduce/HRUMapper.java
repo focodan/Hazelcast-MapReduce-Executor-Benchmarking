@@ -22,23 +22,23 @@ import hazel.hru.HRU;
 
 public class HRUMapper
         implements Mapper<Integer, HRU, String, Double> {
+    
+    private final int slices; // how many division we make in range [0,90]
 
-    private static final String LOW = "LOW";
-    private static final String MED = "MED";
-    private static final String HIGH = "HIGH";
-
+    public HRUMapper(int numSlices){
+        slices = numSlices;
+    }
+    
     @Override
     public void map(Integer key, HRU hru, Context<String, Double> context) {
+        context.emit(toSliceKey(hru.slope), hru.slope);
+    }
+    
+    private String toSliceKey(double slope){
+        double sliceSize = 90.0/slices;
+        Integer slice = (int)(slope/sliceSize);
         
-        if(hru.slope<30.0){
-            context.emit(LOW, hru.slope);
-        }
-        else if(hru.slope<60.0){
-            context.emit(MED, hru.slope);
-        }
-        else{
-            context.emit(HIGH, hru.slope);
-        }
+        return slice.toString();
     }
 
 }

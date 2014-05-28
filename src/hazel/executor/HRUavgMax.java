@@ -42,7 +42,8 @@ public class HRUavgMax implements Callable<String[]>, Serializable {
             count++;
             if(max < h.slope) max = h.slope;
         }
-
+        
+        hz.shutdown();
         return new String[] {level,(new Double(sum/count)).toString(),new Double(max).toString()};
     }
 }
