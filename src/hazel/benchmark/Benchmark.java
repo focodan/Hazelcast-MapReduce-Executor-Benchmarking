@@ -5,7 +5,6 @@ import hazel.executor.ExecutorDriver;
 import hazel.mapreduce.MapReduceDriver;
 
 /**
- *
  * @author daniel.elliott
  */
 public class Benchmark {

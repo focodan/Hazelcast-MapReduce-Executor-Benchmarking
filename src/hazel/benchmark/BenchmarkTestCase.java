@@ -1,16 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package hazel.benchmark;
 
+import hazel.util.ResultWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * @author daniel.elliott
  */
 public class BenchmarkTestCase {
@@ -81,24 +76,49 @@ public class BenchmarkTestCase {
         }
     }
     
+    //returns array in the form: <variable value, mapreduce total time, mapreduce job time, executor total time, executor job time>
     public List<Long[]> execute(){
         List results = new ArrayList<Long[]>();
         
         while(getIndepVar() <= maxValue){
-            results.add(benchmark.execute());
+            Long[] times = benchmark.execute();
+            if(times != null){
+                results.add(new Long[]{(long)getIndepVar(),times[0],times[1],times[2],times[3]});
+            }
             updateIndepVar();
         }
         
         return results;
     }
     
-    // For now, this just a test of the default test case
+    // to use for CSV files we wish to write
+    public static String toHeader(int numKeys,int numEntries,int minClusterSize,String taskType,String independentVar){
+        return new String(
+                // configuration information
+                "Initial configuration has "+numKeys+" keys; "+numEntries+" entries; "+minClusterSize+
+                " minimum cluster size; "+taskType+" task\n"
+                // column labels
+                +independentVar+", mapreduce total time, mapreduce job time, executor total time, executor job time\n");
+    }
+    
+    // For now, just a simple case
     public static void main(String[] args) {
-        BenchmarkTestCase b = new BenchmarkTestCase();
+        // default, no writing to file
+        /*BenchmarkTestCase b = new BenchmarkTestCase();
         List<Long[]> l = b.execute();
         System.out.println("BenchmarkTestCase default run:");
         for(Long[] res : l){
-            System.out.println(res[0]+","+res[1]+","+res[2]+","+res[3]);
-        }
+            System.out.println(res[0]+","+res[1]+","+res[2]+","+res[3]+","+res[4]);
+        }*/
+        
+        // create a test case, run it, output results to CSV
+        BenchmarkTestCase b = new BenchmarkTestCase(3,100,1,"HRU","entry",200,50,true);
+        String header = toHeader(3,100,1,"HRU","entry");
+        List<Long[]> results = b.execute();
+        ResultWriter w = new ResultWriter();
+        w.setHeader(header);
+        w.setData(results);
+        w.write("testCSV.csv");
+        
     }
 }
