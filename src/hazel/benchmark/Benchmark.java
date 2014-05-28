@@ -26,8 +26,29 @@ public class Benchmark {
     public Benchmark() {
         this(3, 1000, 1, "HRU");
     }
+ 
+ 
+    public int getNumKeys(){
+        return numKeys;
+    }
+    public int getNumEntries(){
+        return numEntries;
+    }
+    public int getMinClusterSize(){
+        return minClusterSize;
+    }
+    
+    public void updateNumKeys(int keys){
+        numKeys = keys;
+    }
+    public void updateNumEntries(int entries){
+        numEntries = entries;
+    }
+    public void updateMinClusterSize(int clusterSize){
+        minClusterSize = clusterSize;
+    }
 
-    public synchronized void updateConfig(int keys, int entries, int clusterSize, String task) {
+    public void updateConfig(int keys, int entries, int clusterSize, String task) {
         numKeys = keys;
         numEntries = entries;
         minClusterSize = clusterSize;
@@ -35,8 +56,8 @@ public class Benchmark {
     }
 
     // performs a benchmark according to its configuration
-    // returns array of {mapReduceTime, executorTime} in milliseconds
-    public synchronized Long[] execute() {
+    // returns array of {mapReduceTime total, mapReduceTime job, executorTime total, executorTime job} in milliseconds
+    public Long[] execute() {
         // running times in milliseconds
         Long[] runTimeMapR;
         Long[] runTimeExecutor;
