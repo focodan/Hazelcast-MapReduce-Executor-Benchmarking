@@ -79,7 +79,7 @@ public class BenchmarkTestCase {
         }
     }
     
-    //returns array in the form: <variable value, mapreduce total time, mapreduce job time, executor total time, executor job time>
+    //returns list of arrays in the form: <variable value, mapreduce total time, mapreduce job time, executor total time, executor job time>
     public List<Long[]> execute(){
         List results = new ArrayList<Long[]>();
         
@@ -91,6 +91,21 @@ public class BenchmarkTestCase {
             updateIndepVar();
         }
         
+        return results;
+    }
+ 
+    // This runs the current configuration n number of times and does not change the value of the independent variable
+    //returns a list of arrays in the form: <variable value, mapreduce total time, mapreduce job time, executor total time, executor job time>
+    public List<Long[]> executeFlat(int n){
+        List results = new ArrayList<Long[]>();
+
+        for(int i=0;i<n;i++){
+            Long[] times = benchmark.execute();
+            if(times != null){
+                results.add(new Long[]{(long)getIndepVar(),times[0],times[1],times[2],times[3]});
+            }
+        }
+
         return results;
     }
     
@@ -120,13 +135,13 @@ public class BenchmarkTestCase {
         }*/
         
         // create a test case, run it, output results to CSV
-        BenchmarkTestCase b = new BenchmarkTestCase(3,100,1,"HRU","entry",200,50,true);
-        String header = b.getHeader(); //toHeader(3,100,1,"HRU","entry");
-        List<Long[]> results = b.execute();
-        ResultWriter w = new ResultWriter();
-        w.setHeader(header);
-        w.setData(results);
-        w.write("testCSV.csv");
+//        BenchmarkTestCase b = new BenchmarkTestCase(3,100,1,"HRU","entry",200,50,true);
+//        String header = b.getHeader(); //toHeader(3,100,1,"HRU","entry");
+//        List<Long[]> results = b.execute();
+//        ResultWriter w = new ResultWriter();
+//        w.setHeader(header);
+//        w.setData(results);
+//        w.write("testCSV.csv");
         
     }
 }
