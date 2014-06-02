@@ -19,6 +19,7 @@ public class BenchmarkTestCase {
     private int step; //The value we increase our independent variable by each run
     private boolean isArithmetic; // if true, we increment independentVar by step each time.
                                   // if false, we multiply independentVar by step each time.
+    private final String header;
 
     public BenchmarkTestCase(int numKeys,int numEntries,int minClusterSize,
             String taskType,String independentVar,int maxValue,int step,boolean isArithmetic){
@@ -29,6 +30,8 @@ public class BenchmarkTestCase {
         this.maxValue = maxValue;
         this.step = step;
         this.isArithmetic = isArithmetic;
+        
+        header = toHeader(numKeys,numEntries,minClusterSize,taskType,independentVar);
     }
     
     //sets step to 1, arithmetic increase of independentVar
@@ -92,13 +95,18 @@ public class BenchmarkTestCase {
     }
     
     // to use for CSV files we wish to write
-    public static String toHeader(int numKeys,int numEntries,int minClusterSize,String taskType,String independentVar){
+    private static String toHeader(int numKeys,int numEntries,int minClusterSize,String taskType,String independentVar){
         return new String(
                 // configuration information
-                "Initial configuration has "+numKeys+" keys; "+numEntries+" entries; "+minClusterSize+
-                " minimum cluster size; "+taskType+" task\n"
+                "Configuration for test case \n"+
+                "#keys,#entries,#cluster members,task type,independent variable\n"+
+                numKeys+","+numEntries+","+minClusterSize+","+taskType+","+independentVar+"\n"+
                 // column labels
-                +independentVar+", mapreduce total time, mapreduce job time, executor total time, executor job time\n");
+                independentVar+",mapreduce total time,mapreduce job time,executor total time,executor job time");
+    }
+    
+    public String getHeader(){
+        return header;
     }
     
     // For now, just a simple case
@@ -113,7 +121,7 @@ public class BenchmarkTestCase {
         
         // create a test case, run it, output results to CSV
         BenchmarkTestCase b = new BenchmarkTestCase(3,100,1,"HRU","entry",200,50,true);
-        String header = toHeader(3,100,1,"HRU","entry");
+        String header = b.getHeader(); //toHeader(3,100,1,"HRU","entry");
         List<Long[]> results = b.execute();
         ResultWriter w = new ResultWriter();
         w.setHeader(header);
