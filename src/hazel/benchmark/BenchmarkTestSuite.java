@@ -116,7 +116,7 @@ public class BenchmarkTestSuite {
             }
 
             System.out.println("test set 0");
-            testSet1(directory, clusterSize);
+            testSet0(directory, clusterSize);
 
             System.out.println("test set 1");
             testSet1(directory, clusterSize);
