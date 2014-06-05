@@ -50,9 +50,9 @@ public class ExecutorDriver {
         int numSlopeKeys = (90%SLOPE_GRANULARITY == 0)? (SLOPE_GRANULARITY): (SLOPE_GRANULARITY+1);
         List<Future<String[]>> taskFutures = new ArrayList<>(SLOPE_GRANULARITY);
 
-        Config cfg = new Config();
-        cfg.setProperty("hazelcast.initial.min.cluster.size", (MIN_CLUSTER_SIZE).toString());
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance(cfg);
+//        Config cfg = new Config();
+//        cfg.setProperty("hazelcast.initial.min.cluster.size", (MIN_CLUSTER_SIZE).toString());
+        HazelcastInstance hz = Hazelcast.newHazelcastInstance(null);
         IExecutorService es = hz.getExecutorService("default");
         try {
             long startTimeInitData = System.currentTimeMillis();

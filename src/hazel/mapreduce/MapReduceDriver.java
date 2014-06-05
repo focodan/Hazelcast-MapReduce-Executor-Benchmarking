@@ -61,12 +61,12 @@ public class MapReduceDriver {
         long durationTask = -1L; // How long it takes to execute job without the overhead of placing data in the cluster
         long durationTotal = -1L; // How long it takes to execute job including initializing data to place in the cluster
         Long[] durations = new Long[2];
-        Config config = new Config();
+//        Config config = new Config();
+//        
+//        // set a minimum number of nodes in the cluster before the mapreduce job can begin
+//        config.setProperty("hazelcast.initial.min.cluster.size", MIN_C_SIZE.toString());
         
-        // set a minimum number of nodes in the cluster before the mapreduce job can begin
-        config.setProperty("hazelcast.initial.min.cluster.size", MIN_C_SIZE.toString());
-        
-        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(null);
 
         try {
             long startTimeInitData = System.currentTimeMillis();
