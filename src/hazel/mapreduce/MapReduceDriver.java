@@ -25,6 +25,7 @@ import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 import hazel.hru.HRU;
+import hazel.node.UniversalHZ;
 
 import java.util.Map;
 
@@ -61,13 +62,9 @@ public class MapReduceDriver {
         long durationTask = -1L; // How long it takes to execute job without the overhead of placing data in the cluster
         long durationTotal = -1L; // How long it takes to execute job including initializing data to place in the cluster
         Long[] durations = new Long[2];
-//        Config config = new Config();
-//        
-//        // set a minimum number of nodes in the cluster before the mapreduce job can begin
-//        config.setProperty("hazelcast.initial.min.cluster.size", MIN_C_SIZE.toString());
-        
-        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(null);
 
+        HazelcastInstance hazelcastInstance = UniversalHZ.getInstance();
+        
         try {
             long startTimeInitData = System.currentTimeMillis();
             
@@ -86,7 +83,8 @@ public class MapReduceDriver {
                 System.out.println("\tSlope type'" + entry.getKey() + "' has average " + entry.getValue()[0] + " angle, and max of "+entry.getValue()[1]);
             }*/
         } finally {
-            Hazelcast.shutdownAll();
+            //Hazelcast.shutdownAll();
+            (hazelcastInstance.getMap("articles")).clear();
         }
         
         durations[0] = durationTotal;

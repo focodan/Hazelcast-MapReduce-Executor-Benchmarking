@@ -65,11 +65,10 @@ public class Benchmark {
             if (taskType.equals("HRU")) {
                 ExecutorDriver ex = new ExecutorDriver(numKeys, numEntries, minClusterSize);
                 runTimeExecutor = ex.execute();
-                Thread.sleep(100);
-                
+
                 MapReduceDriver mr = new MapReduceDriver(numKeys, numEntries, minClusterSize);
                 runTimeMapR = mr.execute();
-                Thread.sleep(100);
+                //Thread.sleep(800); // allow clients to shutdown
                 
                 return new Long[]{runTimeMapR[0],runTimeMapR[1], runTimeExecutor[0],runTimeExecutor[1]};
             }

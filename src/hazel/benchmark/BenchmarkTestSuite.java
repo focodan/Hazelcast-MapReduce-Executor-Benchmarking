@@ -1,6 +1,7 @@
 
 package hazel.benchmark;
 
+import com.hazelcast.core.Hazelcast;
 import hazel.util.ResultWriter;
 import java.util.List;
 
@@ -201,7 +202,8 @@ public class BenchmarkTestSuite {
                 System.out.println("test set 2");
                 testSet2(trialDir, clusterSize, isLongTerm);
             }
-  
+        // make sure all of the instances on this JVM close.
+        Hazelcast.shutdownAll();
         }
     }
 

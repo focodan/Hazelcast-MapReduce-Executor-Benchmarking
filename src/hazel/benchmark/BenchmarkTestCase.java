@@ -1,6 +1,7 @@
 
 package hazel.benchmark;
 
+import com.hazelcast.core.Hazelcast;
 import hazel.util.ResultWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,7 @@ public class BenchmarkTestCase {
     
     //default test case
     public BenchmarkTestCase(){
-        this(3,100,1,"HRU","entry",200,50,true);
+        this(3,100,1,"HRU","entry",1000,100,true);
     }
     
     private int getIndepVar(){
@@ -135,13 +136,16 @@ public class BenchmarkTestCase {
         }*/
         
         // create a test case, run it, output results to CSV
-//        BenchmarkTestCase b = new BenchmarkTestCase(3,100,1,"HRU","entry",200,50,true);
-//        String header = b.getHeader(); //toHeader(3,100,1,"HRU","entry");
-//        List<Long[]> results = b.execute();
-//        ResultWriter w = new ResultWriter();
-//        w.setHeader(header);
-//        w.setData(results);
-//        w.write("testCSV.csv");
+        BenchmarkTestCase b = new BenchmarkTestCase(3,100,1,"HRU","entry",2000,100,true);
+        String header = b.getHeader(); //toHeader(3,100,1,"HRU","entry");
+        List<Long[]> results = b.execute();
+        ResultWriter w = new ResultWriter();
+        w.setHeader(header);
+        w.setData(results);
+        w.write("testCSVSingleton1.csv");
+        
+        // make sure all of the instances on this JVM close.
+        Hazelcast.shutdownAll();
         
     }
 }

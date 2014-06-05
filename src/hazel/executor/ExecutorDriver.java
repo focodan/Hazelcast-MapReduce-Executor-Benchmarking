@@ -8,6 +8,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.core.MultiMap;
 import hazel.hru.HRU;
+import hazel.node.UniversalHZ;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -50,9 +51,7 @@ public class ExecutorDriver {
         int numSlopeKeys = (90%SLOPE_GRANULARITY == 0)? (SLOPE_GRANULARITY): (SLOPE_GRANULARITY+1);
         List<Future<String[]>> taskFutures = new ArrayList<>(SLOPE_GRANULARITY);
 
-//        Config cfg = new Config();
-//        cfg.setProperty("hazelcast.initial.min.cluster.size", (MIN_CLUSTER_SIZE).toString());
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance(null);
+        HazelcastInstance hz = UniversalHZ.getInstance();
         IExecutorService es = hz.getExecutorService("default");
         try {
             long startTimeInitData = System.currentTimeMillis();
@@ -79,7 +78,8 @@ public class ExecutorDriver {
             durationTotal = stopTime - startTimeInitData;
             durationTask = stopTime - startTimeExecute;
         } finally {
-            Hazelcast.shutdownAll();
+            (hz.getMultiMap("HRUs")).clear();
+            //Hazelcast.shutdownAll();
         }
 
         durations[0] = durationTotal;
