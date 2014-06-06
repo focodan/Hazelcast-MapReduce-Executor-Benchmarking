@@ -23,9 +23,6 @@ public class SimpleNode {
     }
     
     public static void main(String[] args) {
-        //Config config = new Config();
-        //config.getGroupConfig().setName("HRU");
         HazelcastInstance instance = Hazelcast.newHazelcastInstance(null);
-        //System.out.println("This node has ID:"+instance.getCluster());
     }
 }

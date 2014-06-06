@@ -44,12 +44,10 @@ public class ResultWriter {
             }
             if(data != null){
                 for(Long[] row : data){
-                    //if (row != null){
                         for(int i=0;i<row.length;i++){
                             pw.print(row[i]);
                             if(i!=row.length-1) pw.print(",");
                         }pw.println();
-                    //}
                 }
             }
 

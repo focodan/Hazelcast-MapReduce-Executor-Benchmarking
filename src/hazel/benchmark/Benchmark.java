@@ -11,19 +11,17 @@ public class Benchmark {
 
     private int numKeys;
     private int numEntries;
-    private int minClusterSize;
     private String taskType;
 
-    public Benchmark(int keys, int entries, int clusterSize, String task) {
+    public Benchmark(int keys, int entries, String task) {
         numKeys = keys;
         numEntries = entries;
-        minClusterSize = clusterSize;
         taskType = task;
     }
 
     //simply default, local configuration
     public Benchmark() {
-        this(3, 1000, 1, "HRU");
+        this(3, 1000, "HRU");
     }
  
  
@@ -33,24 +31,16 @@ public class Benchmark {
     public int getNumEntries(){
         return numEntries;
     }
-    public int getMinClusterSize(){
-        return minClusterSize;
-    }
-    
     public void updateNumKeys(int keys){
         numKeys = keys;
     }
     public void updateNumEntries(int entries){
         numEntries = entries;
     }
-    public void updateMinClusterSize(int clusterSize){
-        minClusterSize = clusterSize;
-    }
 
-    public void updateConfig(int keys, int entries, int clusterSize, String task) {
+    public void updateConfig(int keys, int entries, String task) {
         numKeys = keys;
         numEntries = entries;
-        minClusterSize = clusterSize;
         taskType = task;
     }
 
@@ -63,10 +53,10 @@ public class Benchmark {
         try {
             //TODO add cases for other task types
             if (taskType.equals("HRU")) {
-                ExecutorDriver ex = new ExecutorDriver(numKeys, numEntries, minClusterSize);
+                ExecutorDriver ex = new ExecutorDriver(numKeys, numEntries);
                 runTimeExecutor = ex.execute();
 
-                MapReduceDriver mr = new MapReduceDriver(numKeys, numEntries, minClusterSize);
+                MapReduceDriver mr = new MapReduceDriver(numKeys, numEntries);
                 runTimeMapR = mr.execute();
                 //Thread.sleep(800); // allow clients to shutdown
                 
@@ -81,7 +71,7 @@ public class Benchmark {
 
     /**
      * @param args the command line arguments 
-     * Usage: <#keys> <#entries> <#min cluster size> <task type>
+     * Usage: <#keys> <#entries> <task type>
      * Example: 3 1000 1 HRU
      */
     public static void main(String[] args) {
@@ -89,7 +79,7 @@ public class Benchmark {
         Benchmark bench;
 
         if (args.length == 4) { //TODO add error checking on args
-            bench = new Benchmark(new Integer(args[0]),new Integer(args[1]),new Integer(args[2]),args[3]);
+            bench = new Benchmark(new Integer(args[0]),new Integer(args[1]),args[2]);
         } else {
             bench = new Benchmark(); // uses default configuration
         }

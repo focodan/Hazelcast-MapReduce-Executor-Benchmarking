@@ -11,7 +11,7 @@ import java.util.List;
 public class BenchmarkTestSuite {
 
     /** 0th test cases: keys [3,10,20] and entries [100] as a FLAT test case, 10 (or 30) iterations per case */
-    public static void testSet0(String directory, int minClusterSize,boolean isLongTerm){
+    public static void testSet0(String directory, boolean isLongTerm){
         int limit; // How many flat tests we'll perform
         if(isLongTerm){ // on long term, we do 30
             limit = 30;
@@ -21,7 +21,7 @@ public class BenchmarkTestSuite {
         }
 
         // Test case 0A
-        BenchmarkTestCase _0A = new BenchmarkTestCase(3,100,minClusterSize,"HRU","entry",1000,100,true);
+        BenchmarkTestCase _0A = new BenchmarkTestCase(3,100,"HRU","entry",1000,100,true);
         String header = _0A.getHeader();
         List<Long[]> results = _0A.executeFlat(limit);
         ResultWriter w_0A = new ResultWriter();
@@ -30,7 +30,7 @@ public class BenchmarkTestSuite {
         w_0A.write(directory+"test_0A.csv");
 
         // Test case 0B
-        BenchmarkTestCase _0B = new BenchmarkTestCase(10,100,minClusterSize,"HRU","entry",1000,100,true);
+        BenchmarkTestCase _0B = new BenchmarkTestCase(10,100,"HRU","entry",1000,100,true);
         String header_0B = _0B.getHeader();
         List<Long[]> results_0B = _0B.executeFlat(limit);
         ResultWriter w_0B = new ResultWriter();
@@ -39,7 +39,7 @@ public class BenchmarkTestSuite {
         w_0B.write(directory+"test_0B.csv");
 
         // Test case 0C
-        BenchmarkTestCase _0C = new BenchmarkTestCase(20,100,minClusterSize,"HRU","entry",1000,100,true);
+        BenchmarkTestCase _0C = new BenchmarkTestCase(20,100,"HRU","entry",1000,100,true);
         String header_0C = _0C.getHeader();
         List<Long[]> results_0C = _0C.executeFlat(limit);
         ResultWriter w_0C = new ResultWriter();
@@ -50,7 +50,7 @@ public class BenchmarkTestSuite {
     }
 
     /** 1st test cases: keys [3,10,20] and entries [100,200, ... 1,000] */
-    public static void testSet1(String directory, int minClusterSize,boolean isLongTerm){
+    public static void testSet1(String directory, boolean isLongTerm){
         int limit; // the maximum value of our independent variable
         if(isLongTerm){
             limit = 3000;
@@ -59,7 +59,7 @@ public class BenchmarkTestSuite {
             limit = 1000;
         }
         // Test case 1A
-        BenchmarkTestCase _1A = new BenchmarkTestCase(3,100,minClusterSize,"HRU","entry",limit,100,true);
+        BenchmarkTestCase _1A = new BenchmarkTestCase(3,100,"HRU","entry",limit,100,true);
         String header = _1A.getHeader();
         List<Long[]> results = _1A.execute();
         ResultWriter w_1A = new ResultWriter();
@@ -68,7 +68,7 @@ public class BenchmarkTestSuite {
         w_1A.write(directory+"test_1A.csv");
 
         // Test case 1B
-        BenchmarkTestCase _1B = new BenchmarkTestCase(10,100,minClusterSize,"HRU","entry",limit,100,true);
+        BenchmarkTestCase _1B = new BenchmarkTestCase(10,100,"HRU","entry",limit,100,true);
         String header_1B = _1B.getHeader();
         List<Long[]> results_1B = _1B.execute();
         ResultWriter w_1B = new ResultWriter();
@@ -77,7 +77,7 @@ public class BenchmarkTestSuite {
         w_1B.write(directory+"test_1B.csv");
 
         // Test case 1C
-        BenchmarkTestCase _1C = new BenchmarkTestCase(20,100,minClusterSize,"HRU","entry",limit,100,true);
+        BenchmarkTestCase _1C = new BenchmarkTestCase(20,100,"HRU","entry",limit,100,true);
         String header_1C = _1C.getHeader();
         List<Long[]> results_1C = _1C.execute();
         ResultWriter w_1C = new ResultWriter();
@@ -88,7 +88,7 @@ public class BenchmarkTestSuite {
     }
 
     /** 2nd test cases: entries [1,000, 10,100, 100,000] and keys [10, 20, ... 100] */
-    public static void testSet2(String directory, int minClusterSize,boolean isLongTerm){
+    public static void testSet2(String directory, boolean isLongTerm){
         int limit; // the maximum value of our independent variable
         if(isLongTerm){
             limit = 300;
@@ -97,7 +97,7 @@ public class BenchmarkTestSuite {
             limit = 100;
         }
         // Test case 2A
-        BenchmarkTestCase _2A = new BenchmarkTestCase(10,1000,minClusterSize,"HRU","key",limit,10,true);
+        BenchmarkTestCase _2A = new BenchmarkTestCase(10,1000,"HRU","key",limit,10,true);
         String header = _2A.getHeader();
         List<Long[]> results = _2A.execute();
         ResultWriter w_2A = new ResultWriter();
@@ -106,7 +106,7 @@ public class BenchmarkTestSuite {
         w_2A.write(directory+"test_2A.csv");
 
         // Test case 2B
-        BenchmarkTestCase _2B = new BenchmarkTestCase(10,10000,minClusterSize,"HRU","key",limit,10,true);
+        BenchmarkTestCase _2B = new BenchmarkTestCase(10,10000,"HRU","key",limit,10,true);
         String header_2B = _2B.getHeader();
         List<Long[]> results_2B = _2B.execute();
         ResultWriter w_2B = new ResultWriter();
@@ -115,7 +115,7 @@ public class BenchmarkTestSuite {
         w_2B.write(directory+"test_2B.csv");
 
         // Test case 2C
-        BenchmarkTestCase _2C = new BenchmarkTestCase(10,100000,minClusterSize,"HRU","key",limit,10,true);
+        BenchmarkTestCase _2C = new BenchmarkTestCase(10,100000,"HRU","key",limit,10,true);
         String header_2C = _2C.getHeader();
         List<Long[]> results_2C = _2C.execute();
         ResultWriter w_2C = new ResultWriter();
@@ -126,12 +126,9 @@ public class BenchmarkTestSuite {
     }
 
     // Usages: <directory>
-    //       : <directory> <cluster size>
-    //       : <directory> <cluster size> <long term>
-    //       : <directory> <cluster size> <long term> <number trials>
+    //       : <directory> <long term>
+    //       : <directory> <long term> <number trials>
     // <directory> is a string representing an existing directory
-    // <cluster size> is an int representing the minimum number of hazelcast nodes
-    //      default: 1
     // <long term> is a string, where "true" runs tests on a larger number of inputs than "false"
     //      default: false
     // <number trials> is an int representing the number of times the test set is ran.
@@ -142,20 +139,16 @@ public class BenchmarkTestSuite {
         int numTrials = 1; // how many times should each test be repeated
         boolean isLongTerm = false; // whether to run the tests are a larger scale
         String directory = "";
-        Integer clusterSize=1;
         String usage = "Usages: <directory>\n"
-                +"      : <directory> <cluster size>\n"
-                +"      : <directory> <cluster size> <long term>\n"
-                +"      : <directory> <cluster size> <long term> <number trials>\n"
+                +"      : <directory> <long term>\n"
+                +"      : <directory> <long term> <number trials>\n"
                 +"<directory> is a string representing an existing directory\n"
-                +"<cluster size> is an int representing the minimum number of hazelcast nodes\n"
-                +"     default: 1\n"
                 +"<long term> is a string, where 'true' runs tests on a larger number of inputs than 'false'\n"
                 +"     default: false\n"
                 +"<number trials> is an int representing the number of times the test set is ran.\n"
                 +"     default: 1\n"
-                +"Examples: run1/ 3\n"
-                +"        : tmp 2 false 3";
+                +"Examples: run1/ true\n"
+                +"        : tmp false 3";
 
 
         // parse command line args
@@ -164,20 +157,16 @@ public class BenchmarkTestSuite {
             if (!directory.endsWith("/")) {
                 directory = directory + "/";
             }
-
             if (args.length >= 2) {
-                clusterSize = new Integer(args[1]);
-            }
-            if (args.length >= 3) {
-                String longTerm = args[2];
+                String longTerm = args[1];
                 if (!(longTerm.equalsIgnoreCase("true") || longTerm.equalsIgnoreCase("false"))) {
                     System.out.println(usage);
                     System.exit(0);
                 }
                 isLongTerm = (longTerm.equalsIgnoreCase("true"));
             }
-            if (args.length >= 4) {
-                numTrials = new Integer(args[3]);
+            if (args.length >= 3) {
+                numTrials = new Integer(args[2]);
             }
         }
         else { // incorrect number of arguments given
@@ -187,22 +176,22 @@ public class BenchmarkTestSuite {
 
         // output configuration
         System.out.println("BenchmarkTestSuite");
-        System.out.println("directory ("+directory+"), cluster size ("+clusterSize+
+        System.out.println("directory ("+directory+
                 "), long term ("+isLongTerm+"), number of trials("+numTrials+")");
 
         // run the test sets
         for(int i=0;i<numTrials;i++){
             String trialDir = directory+"trial_"+(new Integer(i)).toString()+"_";
                 System.out.println("test set 0");
-                testSet0(trialDir, clusterSize, isLongTerm);
+                testSet0(trialDir, isLongTerm);
 
                 System.out.println("test set 1");
-                testSet1(trialDir, clusterSize, isLongTerm);
+                testSet1(trialDir, isLongTerm);
 
                 System.out.println("test set 2");
-                testSet2(trialDir, clusterSize, isLongTerm);
+                testSet2(trialDir, isLongTerm);
             }
-        // make sure all of the instances on this JVM close.
+        // make sure all of the hz instances on this JVM close.
         Hazelcast.shutdownAll();
         }
     }

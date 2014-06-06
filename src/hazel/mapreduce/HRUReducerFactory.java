@@ -26,7 +26,6 @@ public class HRUReducerFactory
 
     @Override
     public Reducer<String, Double, Double[]> newReducer(String key) {
-        // Create a new Reducer for the given key
         return new SlopeAverageMaxReducer();
     }
 

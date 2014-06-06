@@ -15,36 +15,36 @@ public class BenchmarkTestCase {
     
     //independent variable configuration
     private String independentVar; // This can be any of the following values:
-                                   // "key", "entry", "cluster"
+                                   // "key", "entry"
     private int maxValue; // The largest our independent variable is allowed be
     private int step; //The value we increase our independent variable by each run
     private boolean isArithmetic; // if true, we increment independentVar by step each time.
                                   // if false, we multiply independentVar by step each time.
-    private final String header;
+    private final String header; // for output to csv file
 
-    public BenchmarkTestCase(int numKeys,int numEntries,int minClusterSize,
+    public BenchmarkTestCase(int numKeys,int numEntries,
             String taskType,String independentVar,int maxValue,int step,boolean isArithmetic){
         
-        benchmark = new Benchmark(numKeys,numEntries,minClusterSize,taskType);
+        benchmark = new Benchmark(numKeys,numEntries,taskType);
         
         this.independentVar = independentVar;
         this.maxValue = maxValue;
         this.step = step;
         this.isArithmetic = isArithmetic;
         
-        header = toHeader(numKeys,numEntries,minClusterSize,taskType,independentVar);
+        header = toHeader(numKeys,numEntries,taskType,independentVar);
     }
     
     //sets step to 1, arithmetic increase of independentVar
-     public BenchmarkTestCase(int numKeys,int numEntries,int minClusterSize,
+     public BenchmarkTestCase(int numKeys,int numEntries,
             String taskType,String independentVar,int maxValue){
-         this(numKeys,numEntries,minClusterSize, taskType,independentVar, maxValue, 1, true);
+         this(numKeys,numEntries, taskType,independentVar, maxValue, 1, true);
 
     }
     
     //default test case
     public BenchmarkTestCase(){
-        this(3,100,1,"HRU","entry",1000,100,true);
+        this(3,100,"HRU","entry",1000,100,true);
     }
     
     private int getIndepVar(){
@@ -54,13 +54,12 @@ public class BenchmarkTestCase {
         else if(independentVar.equals("entry")){
             return benchmark.getNumEntries();
         }
-        else{ // is cluster size
-            return benchmark.getMinClusterSize();
+        else{
+            return -1;
         }
     }
     
     private void updateIndepVar(){
-
         int newVal;
         if(isArithmetic){
             newVal = getIndepVar() + step;
@@ -75,9 +74,7 @@ public class BenchmarkTestCase {
         else if(independentVar.equals("entry")){
             benchmark.updateNumEntries(newVal);
         }
-        else{ // is cluster size
-            benchmark.updateMinClusterSize(newVal);
-        }
+
     }
     
     //returns list of arrays in the form: <variable value, mapreduce total time, mapreduce job time, executor total time, executor job time>
@@ -111,12 +108,12 @@ public class BenchmarkTestCase {
     }
     
     // to use for CSV files we wish to write
-    private static String toHeader(int numKeys,int numEntries,int minClusterSize,String taskType,String independentVar){
+    private static String toHeader(int numKeys,int numEntries,String taskType,String independentVar){
         return new String(
                 // configuration information
                 "Configuration for test case \n"+
-                "#keys,#entries,#cluster members,task type,independent variable\n"+
-                numKeys+","+numEntries+","+minClusterSize+","+taskType+","+independentVar+"\n"+
+                "#keys,#entries,task type,independent variable\n"+
+                numKeys+","+numEntries+","+taskType+","+independentVar+"\n"+
                 // column labels
                 independentVar+",mapreduce total time,mapreduce job time,executor total time,executor job time");
     }
@@ -135,17 +132,17 @@ public class BenchmarkTestCase {
             System.out.println(res[0]+","+res[1]+","+res[2]+","+res[3]+","+res[4]);
         }*/
         
-        // create a test case, run it, output results to CSV
-        BenchmarkTestCase b = new BenchmarkTestCase(3,100,1,"HRU","entry",2000,100,true);
-        String header = b.getHeader(); //toHeader(3,100,1,"HRU","entry");
-        List<Long[]> results = b.execute();
-        ResultWriter w = new ResultWriter();
-        w.setHeader(header);
-        w.setData(results);
-        w.write("testCSVSingleton1.csv");
-        
-        // make sure all of the instances on this JVM close.
-        Hazelcast.shutdownAll();
+//        // create a test case, run it, output results to CSV
+//        BenchmarkTestCase b = new BenchmarkTestCase(3,100,"HRU","entry",2000,100,true);
+//        String header = b.getHeader(); //toHeader(3,100,1,"HRU","entry");
+//        List<Long[]> results = b.executeFlat(10);
+//        ResultWriter w = new ResultWriter();
+//        w.setHeader(header);
+//        w.setData(results);
+//        w.write("testCSVSingletonFlat.csv");
+//        
+//        // make sure all of the instances on this JVM close.
+//        Hazelcast.shutdownAll();
         
     }
 }
