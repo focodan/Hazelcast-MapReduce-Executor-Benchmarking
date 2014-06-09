@@ -2,16 +2,21 @@
 package hazel.executor;
 
 //import com.hazelcast.config.Config;
-//import com.hazelcast.core.ExecutionCallback;
 //import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.core.MultiMap;
 import hazel.hru.HRU;
 import hazel.node.UniversalHZ;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Future;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 /**
  *
  * @author daniel.elliott
@@ -19,6 +24,7 @@ import java.util.concurrent.Future;
 public class ExecutorDriver {
     private final int NUM_ENTRIES; // how many HRUs we'll use
     private final int NUM_KEYS; // how many divisions we'll make between [0,90]
+    final CountDownLatch latch; // how we will wait for the jobs to complete
     
     public static void main(String[] args){
         ExecutorDriver d = new ExecutorDriver();
@@ -36,7 +42,8 @@ public class ExecutorDriver {
     
     public ExecutorDriver(int keys, int entries){
         NUM_ENTRIES = entries;
-        NUM_KEYS = keys;
+        NUM_KEYS = (90%keys == 0)? (keys): (keys+1);
+        latch = new CountDownLatch(NUM_KEYS);
     }
     
     // Runs a distributed executor servre job
@@ -45,12 +52,14 @@ public class ExecutorDriver {
         long durationTask = -1L; // How long it takes to execute job without the overhead of placing data in the cluster
         long durationTotal = -1L; // How long it takes to execute job including initializing data to place in the cluster
         Long[] durations = new Long[2];
-        // we have NUM_KEYS number of keys, unless 90 doesn't divide it evenly. In that case, we have one more key.
-        int numSlopeKeys = (90%NUM_KEYS == 0)? (NUM_KEYS): (NUM_KEYS+1);
-        List<Future<String[]>> taskFutures = new ArrayList<>(NUM_KEYS);
 
+//        List<Future<String[]>> taskFutures = new ArrayList<>(NUM_KEYS);
+//        Collection<Callable<Object>> tasks = new ArrayList<>(NUM_KEYS);
+
+//        ExecutorService localExecutor = Executors.newFixedThreadPool(8);
         HazelcastInstance hz = UniversalHZ.getInstance();
-        IExecutorService es = hz.getExecutorService("default");
+        /*final*/ IExecutorService es = hz.getExecutorService("default");
+
         try {
             long startTimeInitData = System.currentTimeMillis();
 
@@ -58,19 +67,51 @@ public class ExecutorDriver {
 
             long startTimeExecute = System.currentTimeMillis();
             
-            for(int i=0;i<numSlopeKeys;i++){
-                taskFutures.add(es.submitToKeyOwner(new HRUavgMax((new Integer(i)).toString()), (new Integer(i)).toString()));
-            }
+//            // populate task collection
+//            for(int i=0;i<NUM_KEYS;i++){
+//                final Integer index = i;
+//                tasks.add(new Callable<Object>(){
+//                    HRUavgMax task;
+//                    String partitionKey;
+//                    ExecutionCallback<String[]> callback;
+//                    {
+//                        this.callback = buildCallback();
+//                        this.partitionKey = (new Integer(index)).toString();
+//                        this.task = new HRUavgMax((new Integer(index)).toString());
+//                    }
+//                    
+//                    public void run() {
+//                        es.submitToKeyOwner(task,partitionKey,callback);
+//                    }
+//
+//                    @Override
+//                    public Object call() throws Exception {
+//                        es.submitToKeyOwner(task,partitionKey,callback);
+//                        return null;
+//                    }
+//                });
+//            }
             
-            for(int i=0;i<numSlopeKeys;i++){
-                taskFutures.get(i).get();
-                // In case we care to look at its output
-                /*String[] res = taskFutures.get(i).get();
-                for(String r: res){
-                    System.out.print(r+" ");
-                }System.out.println();
-                */
+            // populate task collection
+            for(int i=0;i<NUM_KEYS;i++){
+                //taskFutures.add(es.submitToKeyOwner(new HRUavgMax((new Integer(i)).toString()), (new Integer(i)).toString()));
+                es.submitToKeyOwner(new HRUavgMax((new Integer(i)).toString()), (new Integer(i)).toString(), buildCallback());
             }
+
+            // invokeAll here ...
+//            long startTimeExecute = System.currentTimeMillis();
+//            localExecutor.invokeAll(tasks);
+
+//            for(int i=0;i<numSlopeKeys;i++){
+//                taskFutures.get(i).get();
+//                // In case we care to look at its output
+//                /*String[] res = taskFutures.get(i).get();
+//                for(String r: res){
+//                    System.out.print(r+" ");
+//                }System.out.println();
+//                */
+//            }
+            latch.await(5, TimeUnit.MINUTES); // very, very high upperbound
 
             long stopTime = System.currentTimeMillis();
             durationTotal = stopTime - startTimeInitData;
@@ -98,5 +139,20 @@ public class ExecutorDriver {
             
             map.put(slice.toString(), tmp);
         }
+    }
+
+    private  ExecutionCallback<String[]> buildCallback() {
+        return new ExecutionCallback<String[]>() {
+            @Override
+            public void onResponse(String[] stringLongMap) {
+                //System.out.println("Calculation finished! :)");
+                latch.countDown();
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        };
     }
 }

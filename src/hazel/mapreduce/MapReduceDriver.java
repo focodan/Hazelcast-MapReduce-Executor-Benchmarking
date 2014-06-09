@@ -52,15 +52,27 @@ public class MapReduceDriver {
         Long[] durations = new Long[2];
 
         HazelcastInstance hazelcastInstance = UniversalHZ.getInstance();
-        
+
         try {
             long startTimeInitData = System.currentTimeMillis();
-            
+
             fillMapWithData(hazelcastInstance);
+
+            // Setup of mapreduce framework
+            JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
+            IMap<Integer, HRU> map = hazelcastInstance.getMap("articles");
+            KeyValueSource<Integer, HRU> source = KeyValueSource.fromMap(map);
+
+            Job<Integer, HRU> job = jobTracker.newJob(source);
             
             long startTimeExecute = System.currentTimeMillis();
-            
-            Map<String, Double[]> slopeAvgs = mapReduce(hazelcastInstance);
+            // Creating a new Job
+            ICompletableFuture<Map<String, Double[]>> future = job
+                    .mapper(new HRUMapper(NUM_KEYS))
+                    .reducer(new HRUReducerFactory())
+                    .submit();
+
+            Map<String, Double[]> slopeAvgs = future.get();
 
             long stopTime = System.currentTimeMillis();
             durationTotal = stopTime - startTimeInitData;
@@ -68,8 +80,8 @@ public class MapReduceDriver {
 
             // we don't need to print values for now
             /*for (Map.Entry<String, Double[]> entry : slopeAvgs.entrySet()) {
-                System.out.println("\tSlope type'" + entry.getKey() + "' has average " + entry.getValue()[0] + " angle, and max of "+entry.getValue()[1]);
-            }*/
+             System.out.println("\tSlope type'" + entry.getKey() + "' has average " + entry.getValue()[0] + " angle, and max of "+entry.getValue()[1]);
+             }*/
         } finally {
             //Hazelcast.shutdownAll();
             (hazelcastInstance.getMap("articles")).clear();
@@ -79,26 +91,6 @@ public class MapReduceDriver {
         durations[1] = durationTask;
         
         return durations;
-    }
-
-    private  Map<String, Double[]> mapReduce(HazelcastInstance hazelcastInstance) throws Exception {
-
-        // Retrieving the JobTracker by name
-        JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
-
-        // Creating the KeyValueSource for a Hazelcast IMap
-        IMap<Integer, HRU> map = hazelcastInstance.getMap("articles");
-        KeyValueSource<Integer, HRU> source = KeyValueSource.fromMap(map);
-
-        Job<Integer, HRU> job = jobTracker.newJob(source);
-
-        // Creating a new Job
-        ICompletableFuture<Map<String, Double[]>> future = job
-                .mapper(new HRUMapper(NUM_KEYS))
-                .reducer(new HRUReducerFactory())
-                .submit();
-
-        return future.get();
     }
 
     private  void fillMapWithData(HazelcastInstance hazelcastInstance) throws Exception {
