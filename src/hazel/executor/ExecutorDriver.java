@@ -1,21 +1,14 @@
 
 package hazel.executor;
 
-//import com.hazelcast.config.Config;
-//import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.core.MultiMap;
-import hazel.hru.HRU;
+import hazel.datatypes.HRU;
+import hazel.datatypes.HRUFactory;
 import hazel.node.UniversalHZ;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 /**
  *
@@ -24,7 +17,8 @@ import java.util.concurrent.TimeUnit;
 public class ExecutorDriver {
     private final int NUM_ENTRIES; // how many HRUs we'll use
     private final int NUM_KEYS; // how many divisions we'll make between [0,90]
-    final CountDownLatch latch; // how we will wait for the jobs to complete
+    private final CountDownLatch latch; // how we will wait for the jobs to complete
+    private HazelcastInstance hz;
     
     public static void main(String[] args){
         ExecutorDriver d = new ExecutorDriver();
@@ -42,76 +36,43 @@ public class ExecutorDriver {
     
     public ExecutorDriver(int keys, int entries){
         NUM_ENTRIES = entries;
-        NUM_KEYS = (90%keys == 0)? (keys): (keys+1);
+        NUM_KEYS = keys;
         latch = new CountDownLatch(NUM_KEYS);
+        hz = UniversalHZ.getInstance();
     }
     
     // Runs a distributed executor servre job
     // Returns time in milliseconds for {total duration of creating data and running task, duration of running task}
     public Long[] execute() throws Exception {
+        //result data
         long durationTask = -1L; // How long it takes to execute job without the overhead of placing data in the cluster
         long durationTotal = -1L; // How long it takes to execute job including initializing data to place in the cluster
         Long[] durations = new Long[2];
+        
+        //hazelcast specific tools and data
+        IExecutorService es = hz.getExecutorService("default");
+        MultiMap<String, HRU> hzMultiMap = hz.getMultiMap("HRUs");
 
-//        List<Future<String[]>> taskFutures = new ArrayList<>(NUM_KEYS);
-//        Collection<Callable<Object>> tasks = new ArrayList<>(NUM_KEYS);
-
-//        ExecutorService localExecutor = Executors.newFixedThreadPool(8);
-        HazelcastInstance hz = UniversalHZ.getInstance();
-        /*final*/ IExecutorService es = hz.getExecutorService("default");
-
+        //test data
+        HRU[] testHRUs = new HRU[NUM_ENTRIES];
+        
         try {
+            // get test-data in memory to avoid the creation cost in benchmark
+            for(int i=0;i<NUM_ENTRIES;i++){
+                testHRUs[i] = HRUFactory.getDefaultHRU();
+            }
+            
             long startTimeInitData = System.currentTimeMillis();
 
-            fillMapWithData(hz);
+            fillMapWithData(testHRUs,hzMultiMap);
 
             long startTimeExecute = System.currentTimeMillis();
-            
-//            // populate task collection
-//            for(int i=0;i<NUM_KEYS;i++){
-//                final Integer index = i;
-//                tasks.add(new Callable<Object>(){
-//                    HRUavgMax task;
-//                    String partitionKey;
-//                    ExecutionCallback<String[]> callback;
-//                    {
-//                        this.callback = buildCallback();
-//                        this.partitionKey = (new Integer(index)).toString();
-//                        this.task = new HRUavgMax((new Integer(index)).toString());
-//                    }
-//                    
-//                    public void run() {
-//                        es.submitToKeyOwner(task,partitionKey,callback);
-//                    }
-//
-//                    @Override
-//                    public Object call() throws Exception {
-//                        es.submitToKeyOwner(task,partitionKey,callback);
-//                        return null;
-//                    }
-//                });
-//            }
-            
-            // populate task collection
+
             for(int i=0;i<NUM_KEYS;i++){
-                //taskFutures.add(es.submitToKeyOwner(new HRUavgMax((new Integer(i)).toString()), (new Integer(i)).toString()));
-                es.submitToKeyOwner(new HRUavgMax((new Integer(i)).toString()), (new Integer(i)).toString(), buildCallback());
+                es.submitToKeyOwner(new HRUHeavyTask((new Integer(i)).toString()), (new Integer(i)).toString(), buildCallback());
             }
 
-            // invokeAll here ...
-//            long startTimeExecute = System.currentTimeMillis();
-//            localExecutor.invokeAll(tasks);
-
-//            for(int i=0;i<numSlopeKeys;i++){
-//                taskFutures.get(i).get();
-//                // In case we care to look at its output
-//                /*String[] res = taskFutures.get(i).get();
-//                for(String r: res){
-//                    System.out.print(r+" ");
-//                }System.out.println();
-//                */
-//            }
-            latch.await(5, TimeUnit.MINUTES); // very, very high upperbound
+            latch.await(10, TimeUnit.MINUTES); // very, very high upperbound
 
             long stopTime = System.currentTimeMillis();
             durationTotal = stopTime - startTimeInitData;
@@ -127,25 +88,24 @@ public class ExecutorDriver {
         return durations;
     }
 
-    private void fillMapWithData(HazelcastInstance hazelcastInstance) throws Exception {
-        double sliceSize = 90.0 / NUM_KEYS;
-        MultiMap<String, HRU> map = hazelcastInstance.getMultiMap("HRUs");
-        for (int i = 1; i <= NUM_ENTRIES; i++) {
-            HRU tmp = new HRU();
-            tmp.ID = i;
-            tmp.slope = (Math.random() * (90)); // generate in range [0,90]
-
-            Integer slice = (int) (tmp.slope / sliceSize);
-            
-            map.put(slice.toString(), tmp);
+    private void fillMapWithData(HRU[] testHRUs, MultiMap<String, HRU> m) throws Exception {
+        MultiMap<String, HRU> map = m;
+        int entriesPerKey = NUM_ENTRIES/NUM_KEYS;
+        int index = 0;
+        for (int i = 0; i < NUM_KEYS; i++) {
+            if(i+1==NUM_KEYS){ entriesPerKey = NUM_ENTRIES/NUM_KEYS + NUM_ENTRIES%NUM_KEYS; }
+            for (int j=0;j<entriesPerKey;j++){
+                map.put((new Integer(i)).toString(), testHRUs[index]);
+                ++index;
+            }
         }
     }
 
     private  ExecutionCallback<String[]> buildCallback() {
         return new ExecutionCallback<String[]>() {
             @Override
-            public void onResponse(String[] stringLongMap) {
-                //System.out.println("Calculation finished! :)");
+            public void onResponse(String[] result) {
+                System.out.println(result[0]+","+result[1]);
                 latch.countDown();
             }
 
