@@ -19,7 +19,7 @@ import java.util.concurrent.Callable;
  *
  * @author daniel.elliott
  */
-public class HRUHeavyTask implements Callable<String[]>, Serializable {
+public class HRUHeavyTask implements Callable<Integer[]>, Serializable {
 
     private final String key;
 
@@ -32,7 +32,7 @@ public class HRUHeavyTask implements Callable<String[]>, Serializable {
     }
 
     @Override
-    public String[] call() {
+    public Integer[] call() {
         HazelcastInstance hz = HazelcastClient.newHazelcastClient(new ClientConfig());
 
         MultiMap<String,HRU> hrusMap  = hz.getMultiMap("HRUs");
@@ -47,7 +47,7 @@ public class HRUHeavyTask implements Callable<String[]>, Serializable {
         fibRecursive(35); // ~ 80 ms penalty
         
         // TODO Consider timing the sum of the body of operations, returning time intervals.
-        return new String[] {key,(new Integer(sumID)).toString()};
+        return new Integer[] {new Integer(key),sumID};
     }
     
     private long fibRecursive(int n) {

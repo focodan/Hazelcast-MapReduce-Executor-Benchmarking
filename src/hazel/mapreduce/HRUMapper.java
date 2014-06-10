@@ -23,7 +23,7 @@ import com.hazelcast.mapreduce.Mapper;
 import hazel.datatypes.HRU;
 
 public class HRUMapper
-        implements Mapper<Integer, HRU, String, Double> {
+        implements Mapper<Integer, HRU, String, Integer> {
     
     private final int NUM_KEYS;
     private final int NUM_ENTRIES;
@@ -34,13 +34,19 @@ public class HRUMapper
     }
     
     @Override
-    public void map(Integer key, HRU hru, Context<String, Double> context) {
-        context.emit(toReducerKey(hru.ID).toString(), new Double(hru.ID)); //TODO refactor to Integer
+    public void map(Integer key, HRU hru, Context<String, Integer> context) {
+        fibRecursive(31);
+        context.emit(toReducerKey(hru.ID).toString(), hru.ID); //TODO refactor to Integer
     }
     
     private Integer toReducerKey(int id){
         int returnKey = id/(NUM_ENTRIES/NUM_KEYS);
-        if(returnKey == NUM_KEYS){ --returnKey; }
+        if(returnKey >= NUM_KEYS){ returnKey = NUM_KEYS-1; }
         return returnKey;
+    }
+    
+    private long fibRecursive(int n) {
+        if (n == 0 || n == 1) return n;
+        else return fibRecursive(n-1) + fibRecursive(n-2);
     }
 }

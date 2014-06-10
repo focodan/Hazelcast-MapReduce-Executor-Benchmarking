@@ -71,21 +71,21 @@ public class MapReduceDriver {
             
             long startTimeExecute = System.currentTimeMillis();
             // Creating a new Job
-            ICompletableFuture<Map<String, Double[]>> future = job
+            ICompletableFuture<Map<String, Integer[]>> future = job
                     .mapper(new HRUMapper(NUM_KEYS,NUM_ENTRIES))
                     .reducer(new HRUReducerFactory())
                     .submit();
 
-            Map<String, Double[]> slopeAvgs = future.get();
+            Map<String, Integer[]> slopeAvgs = future.get();
 
             long stopTime = System.currentTimeMillis();
             durationTotal = stopTime - startTimeInitData;
             durationTask = stopTime - startTimeExecute;
 
             // we don't need to print values for now
-            for (Map.Entry<String, Double[]> entry : slopeAvgs.entrySet()) {
-             System.out.println("\tSlope type'" + entry.getKey() + "' has average " + entry.getValue()[0] + " angle, and max of "+entry.getValue()[1]);
-             }
+//            for (Map.Entry<String, Integer[]> entry : slopeAvgs.entrySet()) {
+//             System.out.println("\tKey number '" + entry.getKey() + "' has entries " + entry.getValue()[0] + ",  "+entry.getValue()[1]);
+//             }
         } finally {
             //Hazelcast.shutdownAll();
             (hz.getMap("HRUs")).clear();

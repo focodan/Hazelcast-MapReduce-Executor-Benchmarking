@@ -22,17 +22,17 @@ import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
 public class HRUReducerFactory
-        implements ReducerFactory<String, Double, Double[]> {
+        implements ReducerFactory<String, Integer, Integer[]> {
 
     @Override
-    public Reducer<String, Double, Double[]> newReducer(String key) {
+    public Reducer<String, Integer, Integer[]> newReducer(String key) {
         return new SlopeAverageMaxReducer(key);
     }
 
-    private class SlopeAverageMaxReducer extends Reducer<String, Double, Double[]> {
+    private class SlopeAverageMaxReducer extends Reducer<String, Integer, Integer[]> {
 
-        private volatile double sum = 0;
-        
+        private volatile int sum = 0;
+
         private String key;
 
         private SlopeAverageMaxReducer(String k) {
@@ -40,16 +40,16 @@ public class HRUReducerFactory
         }
 
         @Override
-        public void reduce(Double id) {
-            fibRecursive(31);
+        public void reduce(Integer id) {
+            //fibRecursive(31);
             sum += id;
         }
 
         @Override
-        public Double[] finalizeReduce() {
+        public Integer[] finalizeReduce() {
             fibRecursive(35);
             // Return the final reduced sum
-            return new Double[] {new Double(key), sum};
+            return new Integer[] {new Integer(key), sum};
         }
     }
 

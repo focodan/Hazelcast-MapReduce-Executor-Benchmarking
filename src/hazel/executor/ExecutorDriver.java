@@ -19,7 +19,7 @@ public class ExecutorDriver {
     private final int NUM_KEYS; // how many divisions we'll make between [0,90]
     private final CountDownLatch latch; // how we will wait for the jobs to complete
     private HazelcastInstance hz;
-    
+
     public static void main(String[] args){
         ExecutorDriver d = new ExecutorDriver();
         try{
@@ -29,7 +29,7 @@ public class ExecutorDriver {
             e.printStackTrace();
         }
     }
-    
+
     public ExecutorDriver(){
         this(3,100);
     }
@@ -69,7 +69,7 @@ public class ExecutorDriver {
             long startTimeExecute = System.currentTimeMillis();
 
             for(int i=0;i<NUM_KEYS;i++){
-                es.submitToKeyOwner(new HRUHeavyTask((new Integer(i)).toString()), (new Integer(i)).toString(), buildCallback());
+                es.submitToKeyOwner(new HRUHeavyTask((new Integer(i).toString())), (new Integer(i)).toString(), buildCallback());
             }
 
             latch.await(10, TimeUnit.MINUTES); // very, very high upperbound
@@ -102,11 +102,11 @@ public class ExecutorDriver {
         }
     }
 
-    private  ExecutionCallback<String[]> buildCallback() {
-        return new ExecutionCallback<String[]>() {
+    private  ExecutionCallback<Integer[]> buildCallback() {
+        return new ExecutionCallback<Integer[]>() {
             @Override
-            public void onResponse(String[] result) {
-                System.out.println(result[0]+","+result[1]);
+            public void onResponse(Integer[] result) {
+                //System.out.println(result[0]+","+result[1]);
                 latch.countDown();
             }
 
