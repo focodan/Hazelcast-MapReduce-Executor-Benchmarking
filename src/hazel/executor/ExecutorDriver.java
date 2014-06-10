@@ -79,6 +79,7 @@ public class ExecutorDriver {
             durationTask = stopTime - startTimeExecute;
         } finally {
             (hz.getMultiMap("HRUs")).clear();
+            HRUFactory.resetIDcount();
             //Hazelcast.shutdownAll();
         }
 

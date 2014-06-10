@@ -26,26 +26,35 @@ public class HRUReducerFactory
 
     @Override
     public Reducer<String, Double, Double[]> newReducer(String key) {
-        return new SlopeAverageMaxReducer();
+        return new SlopeAverageMaxReducer(key);
     }
 
     private class SlopeAverageMaxReducer extends Reducer<String, Double, Double[]> {
 
         private volatile double sum = 0;
-        private volatile double count = 0;
-        private volatile double max = 0;
+        
+        private String key;
+
+        private SlopeAverageMaxReducer(String k) {
+            key = k;
+        }
 
         @Override
-        public void reduce(Double slope) {
-            sum += slope;
-            count++;
-            if(slope>max) { max = slope; }
+        public void reduce(Double id) {
+            fibRecursive(31);
+            sum += id;
         }
 
         @Override
         public Double[] finalizeReduce() {
+            fibRecursive(35);
             // Return the final reduced sum
-            return new Double[] {sum/count, max};
+            return new Double[] {new Double(key), sum};
         }
+    }
+
+    private long fibRecursive(int n) {
+        if (n == 0 || n == 1) return n;
+        else return fibRecursive(n-1) + fibRecursive(n-2);
     }
 }

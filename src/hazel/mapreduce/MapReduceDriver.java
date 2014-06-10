@@ -18,15 +18,14 @@
 
 package hazel.mapreduce;
 
-//import com.hazelcast.config.Config;
-//import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
-import hazel.hru.HRU;
+import hazel.datatypes.HRUFactory;
+import hazel.datatypes.HRU;
 import hazel.node.UniversalHZ;
 import java.util.Map;
 
@@ -34,6 +33,7 @@ import java.util.Map;
 public class MapReduceDriver {
     private final int NUM_ENTRIES; // How many test HRUs we'll generate
     private final int NUM_KEYS; // how many divisions we'll make between [0,90]
+    private HazelcastInstance hz;
 
     public MapReduceDriver(){
         this(3,100); // default case: Run MapR job on this local instance, 100 HRUs
@@ -41,7 +41,8 @@ public class MapReduceDriver {
     
     public MapReduceDriver(int keys, int entries){
         NUM_KEYS = keys;
-        NUM_ENTRIES = entries; 
+        NUM_ENTRIES = entries;
+        hz = UniversalHZ.getInstance();
     }
 
     // Runs a mapreduce job
@@ -50,25 +51,28 @@ public class MapReduceDriver {
         long durationTask = -1L; // How long it takes to execute job without the overhead of placing data in the cluster
         long durationTotal = -1L; // How long it takes to execute job including initializing data to place in the cluster
         Long[] durations = new Long[2];
-
-        HazelcastInstance hazelcastInstance = UniversalHZ.getInstance();
+        hazel.datatypes.HRU[] testHRUs = new hazel.datatypes.HRU[NUM_ENTRIES]; //test data
+        IMap<Integer, HRU> hzMap = hz.getMap("HRUs"); 
 
         try {
+            // get test-data in memory to avoid the creation cost in benchmark
+            for(int i=0;i<NUM_ENTRIES;i++){
+                testHRUs[i] = HRUFactory.getDefaultHRU();
+            }
+
             long startTimeInitData = System.currentTimeMillis();
 
-            fillMapWithData(hazelcastInstance);
+            fillMapWithData(testHRUs,hzMap);
 
             // Setup of mapreduce framework
-            JobTracker jobTracker = hazelcastInstance.getJobTracker("default");
-            IMap<Integer, HRU> map = hazelcastInstance.getMap("articles");
-            KeyValueSource<Integer, HRU> source = KeyValueSource.fromMap(map);
-
+            JobTracker jobTracker = hz.getJobTracker("default");
+            KeyValueSource<Integer, HRU> source = KeyValueSource.fromMap(hzMap);
             Job<Integer, HRU> job = jobTracker.newJob(source);
             
             long startTimeExecute = System.currentTimeMillis();
             // Creating a new Job
             ICompletableFuture<Map<String, Double[]>> future = job
-                    .mapper(new HRUMapper(NUM_KEYS))
+                    .mapper(new HRUMapper(NUM_KEYS,NUM_ENTRIES))
                     .reducer(new HRUReducerFactory())
                     .submit();
 
@@ -79,12 +83,13 @@ public class MapReduceDriver {
             durationTask = stopTime - startTimeExecute;
 
             // we don't need to print values for now
-            /*for (Map.Entry<String, Double[]> entry : slopeAvgs.entrySet()) {
+            for (Map.Entry<String, Double[]> entry : slopeAvgs.entrySet()) {
              System.out.println("\tSlope type'" + entry.getKey() + "' has average " + entry.getValue()[0] + " angle, and max of "+entry.getValue()[1]);
-             }*/
+             }
         } finally {
             //Hazelcast.shutdownAll();
-            (hazelcastInstance.getMap("articles")).clear();
+            (hz.getMap("HRUs")).clear();
+            HRUFactory.resetIDcount();
         }
         
         durations[0] = durationTotal;
@@ -93,13 +98,10 @@ public class MapReduceDriver {
         return durations;
     }
 
-    private  void fillMapWithData(HazelcastInstance hazelcastInstance) throws Exception {
-        IMap<Integer, HRU> map = hazelcastInstance.getMap("articles");
-        for(int i=1;i<=NUM_ENTRIES;i++){
-            HRU tmp = new HRU();
-            tmp.ID = i;
-            tmp.slope = (Math.random() * (90)); // generate in range [0,90]
-            map.put(new Integer(i), tmp);
+    private void fillMapWithData(HRU[] testHRUs, Map<Integer, HRU> m) throws Exception {
+        Map<Integer, HRU> map = m;
+        for(int i=0;i<NUM_ENTRIES;i++){
+            map.put(new Integer(i), testHRUs[i]);
         }
     }
 

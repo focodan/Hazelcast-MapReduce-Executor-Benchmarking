@@ -28,4 +28,8 @@ public class HRUFactory {
         
         return res;
     }
+    
+    public static void resetIDcount(){
+        id = 0;
+    }
 }

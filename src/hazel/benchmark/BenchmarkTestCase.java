@@ -132,17 +132,17 @@ public class BenchmarkTestCase {
             System.out.println(res[0]+","+res[1]+","+res[2]+","+res[3]+","+res[4]);
         }*/
         
-//        // create a test case, run it, output results to CSV
-//        BenchmarkTestCase b = new BenchmarkTestCase(3,100,"HRU","entry",2000,100,true);
-//        String header = b.getHeader(); //toHeader(3,100,1,"HRU","entry");
-//        List<Long[]> results = b.executeFlat(10);
-//        ResultWriter w = new ResultWriter();
-//        w.setHeader(header);
-//        w.setData(results);
-//        w.write("testCSVSingletonFlat.csv");
-//        
-//        // make sure all of the instances on this JVM close.
-//        Hazelcast.shutdownAll();
+        // create a test case, run it, output results to CSV
+        BenchmarkTestCase b = new BenchmarkTestCase(3,100,"HRU","entry",2000,100,true);
+        String header = b.getHeader(); //toHeader(3,100,1,"HRU","entry");
+        List<Long[]> results = b.executeFlat(4);
+        ResultWriter w = new ResultWriter();
+        w.setHeader(header);
+        w.setData(results);
+        w.write("testCSVSingletonFlatttat.csv");
+        
+        // make sure all of the instances on this JVM close.
+        Hazelcast.shutdownAll();
         
     }
 }

@@ -20,27 +20,27 @@ package hazel.mapreduce;
 
 import com.hazelcast.mapreduce.Context;
 import com.hazelcast.mapreduce.Mapper;
-import hazel.hru.HRU;
+import hazel.datatypes.HRU;
 
 public class HRUMapper
         implements Mapper<Integer, HRU, String, Double> {
     
-    private final int slices; // how many division we make in range [0,90]
+    private final int NUM_KEYS;
+    private final int NUM_ENTRIES;
 
-    public HRUMapper(int numSlices){
-        slices = numSlices;
+    public HRUMapper(int numKeys, int numEntries){
+        NUM_KEYS = numKeys;
+        NUM_ENTRIES = numEntries;
     }
     
     @Override
     public void map(Integer key, HRU hru, Context<String, Double> context) {
-        context.emit(toSliceKey(hru.slope), hru.slope);
+        context.emit(toReducerKey(hru.ID).toString(), new Double(hru.ID)); //TODO refactor to Integer
     }
     
-    private String toSliceKey(double slope){
-        double sliceSize = 90.0/slices;
-        Integer slice = (int)(slope/sliceSize);
-        
-        return slice.toString();
+    private Integer toReducerKey(int id){
+        int returnKey = id/(NUM_ENTRIES/NUM_KEYS);
+        if(returnKey == NUM_KEYS){ --returnKey; }
+        return returnKey;
     }
-
 }
